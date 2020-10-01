@@ -82,6 +82,8 @@ class LogController(RawController):
 
     @property
     def brightness(self):
+        if super().brightness == 0:
+            return 0
         return log10(super().brightness)/log10(super().max_brightness)*self.max_brightness
 
     @brightness.setter
