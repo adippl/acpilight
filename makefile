@@ -37,4 +37,12 @@ uninstall:
 	rm -f ${DESTDIR}/usr/share/man/man1/xbacklight.1
 	rm -f $(DESTDIR)/etc/udev/rules.d/90-backlight.rules 
 
-.PHONY: install uninstall all clean
+.PHONY: install uninstall all clean p
+
+p:
+	git push --all origin
+	git push --all github
+
+
+
+

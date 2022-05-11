@@ -12,8 +12,13 @@
 #include <math.h>
 
 
+#define null_check(X) if( (X) == NULL ){ \
+		fprintf(stderr, "null pointer error in %s:%d\n",__FILE__,__LINE__); \
+		exit(EXIT_FAILURE);}
+
 const char* APP_DESC = "control backlight brightness";
 const char* backlight_path = "/sys/class/backlight";
+const char* sys_paths[] = { "/sys/class/backlight", "/sys/class/leds" };
 const char* leds_path = "/sys/class/leds";
 char* backlight_brightness=NULL;
 char* backlight_max_brightness=NULL;
@@ -26,6 +31,54 @@ float f_brightness=0;
 enum action{print,dec,inc,set};
 enum action action=print;
 int action_value=0;
+
+#define DICT_START_SIZE 10
+struct dict {
+	char*** key;
+	char*** val;
+	int		count;
+	int		size;
+	};
+typedef struct dict dict;
+dict*
+dictInit(){
+	dict* ret;
+	ret=calloc(1,sizeof(dict));
+	null_check(ret);
+	ret->count=0;
+	ret->size=DICT_START_SIZE;
+	ret->key=calloc(DICT_START_SIZE, sizeof(char*));
+	null_check(ret->key);
+	printf("%x\n",(*ret->key[1]));
+	ret->val=calloc(DICT_START_SIZE, sizeof(char*));
+	null_check(ret->val);
+	return(ret);}
+int
+dictAppend(dict* d, const char* key, const char* val){
+	null_check(key);
+	null_check(val);
+	if(d->count+1 > d->size){
+		// TODO resize
+		return(1);}
+	d->count++;
+	strcpy((*d->key)[d->count], key);
+	strcpy((*d->val)[d->count], val);
+	return(0);}
+void
+dictFree(dict* d){
+	null_check(d);
+	for(int i=0;i<d->count;i++){
+		free(*d->key[d->count]);
+		free(*d->val[d->count]);}
+	free(d);}
+void
+dictTest(){
+	dict* d=dictInit();
+	dictAppend(d, "a", "x");
+	//dictAppend(d, "b", "y");
+	//dictAppend(d, "c", "z");
+	//dictFree(d);
+	}
 
 int
 fileToint(const char* path){
@@ -50,17 +103,14 @@ intToFile(const char* path, int i){
 	else{
 		perror(path);}
 		return(1);}
-
 void
 setPathsAndBrightness(){	
 	DIR *d;
 	struct dirent *dir;
-	if( (backlight_brightness=malloc(512)) == NULL ){
-		fprintf(stderr, "malloc error in %s:%d\n",__FILE__,__LINE__);
-		exit(EXIT_FAILURE);}
-	if( (backlight_max_brightness=malloc(512)) == NULL ){
-		fprintf(stderr, "malloc error in %s:%d\n",__FILE__,__LINE__);
-		exit(EXIT_FAILURE);}
+	backlight_brightness=malloc(512);
+	null_check(backlight_brightness)
+	backlight_max_brightness=malloc(512);
+	null_check(backlight_max_brightness);
 	d=opendir(backlight_path);
 	if(d){
 		while((dir=readdir(d))!=NULL){
@@ -127,6 +177,7 @@ int
 main(int argc, char* argv[]){
 	char* argPtr=NULL;
 	int val=0;
+	dictTest();
 	
 	//
 	// ARGS
